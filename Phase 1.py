@@ -55,7 +55,10 @@ class ExtendedInventoryEnv(gym.Env):
     - Fixed ordering cost: One-time cost per order (economies of scale)
     - Variable ordering cost: Cost per unit ordered
     """
-    
+
+    # Metadata for Gym-rendering compatibility
+    metadata = {"render_modes": ["human"], "render_fps": 4}
+
     def __init__(
          self,
         max_inventory: int = 500,        # Maximum storage capacity
@@ -130,7 +133,10 @@ class ExtendedInventoryEnv(gym.Env):
             'weather': [],
             'promotions': []
         }
-    
+
+        # Tracker for total reward
+        self.episode_return = 0.0
+
     def seed(self, seed=None):
         """Set random seed for reproducibility."""
         self.np_random = np.random.RandomState(seed)
@@ -153,6 +159,8 @@ class ExtendedInventoryEnv(gym.Env):
         self.weather = 0  
         self.promotion = 0 
         self.time_step = 0
+        # Reset episode reward
+        self.episode_return = 0.0
         
         # Clear history
         for key in self.history:
@@ -160,7 +168,7 @@ class ExtendedInventoryEnv(gym.Env):
         
         return self._get_state()
     
-    def step(self, action: int) -> Tuple[np.ndarray, float, bool, Dict]:
+    def step(self, action: int) -> Tuple[np.ndarray, float, bool, bool, Dict]:
         """Execute one environment step."""
         # Convert action to order quantity
         if self.discrete_actions:
@@ -191,7 +199,10 @@ class ExtendedInventoryEnv(gym.Env):
                 'arrival_time': self.time_step + lead_time
             })
             self.pipeline += order_quantity
-        
+
+        # Added Pipeline safety clamp
+        self.pipeline = max(0, min(self.pipeline, self.max_pipeline))
+
         # Calculate costs (negative reward)
         holding = self.holding_cost * self.inventory
         stockout = self.stockout_penalty * lost_sales
@@ -213,7 +224,11 @@ class ExtendedInventoryEnv(gym.Env):
         
         # Increment time
         self.time_step += 1
-        done = self.time_step >= self.episode_length
+        # Tracks total reward
+        self.episode_return += reward
+
+        terminated = self.time_step >= self.episode_length
+        truncated = False # No early stop for now
         
         # Info dictionary
         info = {
@@ -223,10 +238,11 @@ class ExtendedInventoryEnv(gym.Env):
             'order_quantity': order_quantity,
             'total_cost': total_cost,
             'weather': self.weather,
-            'promotion': self.promotion
+            'promotion': self.promotion,
+            'episode_return': self.episode_return
         }
         
-        return self._get_state(), reward, done, info
+        return self._get_state(), reward, terminated, truncated, info
     
     def _get_state(self) -> np.ndarray:
         """Get current state observation."""
@@ -387,13 +403,13 @@ def test_environment():
     total_reward = 0
     for t in range(100):
         action = env.action_space.sample()
-        state, reward, done, info = env.step(action)
+        state, reward, terminated, truncated, info = env.step(action)
         total_reward += reward
         
         if t % 20 == 0:
             env.render()
         
-        if done:
+        if terminated or truncated:
             break
     
     print(f"\nEpisode finished after {t+1} steps")
