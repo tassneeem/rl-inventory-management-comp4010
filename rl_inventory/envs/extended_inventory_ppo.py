@@ -22,11 +22,11 @@ class ExtendedInventoryEnvPPO(ExtendedInventoryEnv):
         self.enable_reward_shaping = kwargs.pop("reward_shaping", False)
         self.reward_scale = kwargs.pop("reward_scale", 0.01)  # Scale rewards
         
-        # Always force continuous-actions for this wrapper
+        # Always force continuous-actions
         kwargs["discrete_actions"] = False
         super().__init__(*args, **kwargs)
 
-        # Use [0, 1] action space - easier for PPO to learn
+        # Use [0, 1] action space 
         self.action_space = Box(
             low=0.0,
             high=1.0,
@@ -65,12 +65,7 @@ class ExtendedInventoryEnvPPO(ExtendedInventoryEnv):
             return result, {}
 
     def _rescale_action(self, action) -> float:
-        """
-        Convert a PPO action in [0, 1] to an actual order quantity in [0, max_order].
-        
-        This is simpler than [-1, 1] rescaling and avoids the agent getting stuck
-        at negative values that map to zero orders.
-        """
+        "Convert a PPO action in [0, 1] to an actual order quantity in [0, max_order]."
         # Handle different input types
         a = float(np.asarray(action).reshape(-1)[0])
         # Clip to valid range and scale
@@ -79,14 +74,8 @@ class ExtendedInventoryEnvPPO(ExtendedInventoryEnv):
         return float(scaled)
 
     def step(self, action):
-        """
-        Take one RL step with reward scaling.
-
-        - `action` comes from PPO as a value in [0, 1].
-        - We rescale it to [0, max_order].
-        - We pass it to the base environment as a 1D array.
-        - We scale the reward for more stable learning.
-        """
+        "Take one RL step with reward scaling."
+        
         order_quantity = self._rescale_action(action)
         
         # Create a continuous action array for the base environment

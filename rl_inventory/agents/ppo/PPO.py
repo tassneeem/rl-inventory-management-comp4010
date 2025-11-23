@@ -128,19 +128,20 @@ def create_ppo_model(env_fn,
 
     return model
 
-def train_ppo(env_fn,
-              total_timesteps=200000,
-              learning_rate=5e-4,
-              n_steps=2048,
-              batch_size=64,
-              n_epochs=10,
-              gamma=0.99,
-              gae_lambda=0.95,
-              clip_range=0.3,
-              ent_coef=0.05,
-              seed=42,
-              save_path="ppo_inventory",
-              verbose=1):
+def train_ppo(
+        env_fn,
+        n_steps=1024,
+        learning_rate=1e-4,
+        batch_size=64,
+        n_epochs=10,
+        gamma=0.99,
+        gae_lambda=0.95,
+        clip_range=0.2,
+        ent_coef= 0.05,
+        seed=42,
+        total_timesteps=200000,
+        save_path="ppo_inventory",
+        verbose=1):
     """
     Train a PPO agent.
     

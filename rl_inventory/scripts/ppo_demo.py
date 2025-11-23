@@ -47,7 +47,7 @@ def train_agent(
     n_epochs=10,
     gamma=0.99,
     gae_lambda=0.95,
-    clip_range=0.2,
+    clip_range=0.3,
     ent_coef= 0.01,
     seed=42,
     save_name=None
@@ -89,6 +89,7 @@ def train_agent(
     print("TRAINING PPO AGENT\n")
     print(f"Total timesteps: {num_timesteps:,}")
     print(f"Rollout length: {n_steps}")
+    print(f"clip range: {clip_range}")
     print(f"Save location: {save_path}.zip")
     
     model, callback = train_ppo(
@@ -178,9 +179,9 @@ def demo_run(agent, discretizer=None):
     
     print(f"\nEPISODE SUMMARY:")
     print(f"   Total days: {day+1}")
-    print(f"   Total reward: {total_reward:.2f}")
-    print(f"   Total cost: ${-total_reward:.2f}")
-    print(f"   Average daily cost: ${-total_reward/(day+1):.2f}")
+    print(f"   Total reward: {(total_reward*100):.2f}")
+    print(f"   Total cost: ${-(total_reward*100):.2f}")
+    print(f"   Average daily cost: ${-(total_reward*100)/(day+1):.2f}")
     
     # Plot episode
     print("\nPlotting Episode...")

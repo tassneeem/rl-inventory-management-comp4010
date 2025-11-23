@@ -210,24 +210,6 @@ class ExtendedInventoryEnv(gym.Env):
         variable = self.variable_order_cost * order_quantity
         total_cost = holding + stockout + fixed + variable
         reward = -total_cost
-
-        if 30 <= self.inventory <= 100:
-            reward += 0.5  # Good inventory level
-
-        if self.inventory < 10:
-            reward -= 1.0  # Too low (risky)
-
-        if self.inventory > 200:
-            reward -= 0.5  # Too high (wasteful)
-
-        if lost_sales == 0 and demand > 0:
-            reward += 0.2  # Successfully met demand
-
-        if self.inventory < 20 and order_quantity > 0:
-            reward += 0.3  # Good decision to order when low
-
-        if 20 <= order_quantity <= 100:
-            reward += 0.1  # Moderate order size
         
         # Update demand history
         self.demand_history.append(min(demand, self.max_demand))
